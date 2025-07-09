@@ -136,8 +136,8 @@ def get_gemini_response(user_id, user_prompt):
         history_prompt = build_prompt_with_memory(user_id)
         full_prompt = f"{character_prompt}\n\n{history_prompt}\n你：{user_prompt}"
         
-        url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={config.get('gemini_api_key')}"
-        #url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={config.get('gemini2.0_api_key')}"
+        #url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={config.get('gemini_api_key')}"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={config.get('gemini2.0_api_key')}"
         res = requests.post(url, headers={"Content-Type": "application/json"}, json={"contents": [{"parts": [{"text": full_prompt}]}]})
         res_json = res.json()
 
