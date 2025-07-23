@@ -136,6 +136,50 @@ def get_gemini_response(user_id, user_prompt):
         history_prompt = build_prompt_with_memory(user_id)
         full_prompt = f"{character_prompt}\n\n{history_prompt}\n你：{user_prompt}"
         
+        url = "http://59.124.237.254:49153/api/generate"
+        payload = {
+            "model": "gemma:2b",
+            "prompt": full_prompt,
+            "stream": False
+        }
+        res = requests.post(url, headers={"Content-Type": "application/json"}, json=payload)
+        res_json = res.json()
+
+        reply = ""
+        # Ollama 回傳格式範例：{"response": "模型回應內容", ...}
+        if "response" in res_json:
+            try:
+                reply = res_json["response"].strip()
+                if not reply:
+                    raise ValueError("空回應")
+                append_user_message(user_id, "user", user_prompt)
+                append_user_message(user_id, "assistant", reply)
+                return reply
+            except Exception as e:
+                logging.warning(f"Ollama 回應格式錯誤或內容缺失：{e}")
+                reply = "😅 抱歉，皮熊想不出話來...可以再問一次嗎？"
+                append_user_message(user_id, "user", user_prompt)
+                append_user_message(user_id, "assistant", reply)
+                return reply
+        elif "error" in res_json:
+            logging.error(f"Ollama 回傳錯誤：{res_json}")
+            return f"⚠️ Ollama 錯誤：{res_json['error']}"
+        else:
+            logging.error(f"Ollama 回傳未知格式：{res_json}")
+            return "❌ 無法取得 LLM 回覆，請稍後再試。"
+    except Exception as e:
+        logging.error("Ollama 回應失敗: %s", str(e))
+        return "❌ 無法取得 LLM 回覆，請稍後再試。"
+
+
+def get_gemini_responseold(user_id, user_prompt):
+    try:
+        with open("system_prompt.txt", "r", encoding="utf-8") as f:
+            character_prompt = f.read().strip()
+
+        history_prompt = build_prompt_with_memory(user_id)
+        full_prompt = f"{character_prompt}\n\n{history_prompt}\n你：{user_prompt}"
+        
         url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={config.get('gemini_api_key')}"
         #url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={config.get('gemini2.0_api_key')}"
         res = requests.post(url, headers={"Content-Type": "application/json"}, json={"contents": [{"parts": [{"text": full_prompt}]}]})
