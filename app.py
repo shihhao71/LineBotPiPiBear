@@ -1,6 +1,7 @@
 import os
 import random
 import logging
+logging.basicConfig(level=logging.INFO)  # 或 DEBUG
 import requests
 import json
 
