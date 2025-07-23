@@ -129,7 +129,7 @@ def build_prompt_with_memory(user_id):
     ])
     return f"{profile_text}{history_text}"
 
-def get_gemini_response(user_id, user_prompt):
+def get_gemini_response2(user_id, user_prompt):
     try:
         with open("system_prompt.txt", "r", encoding="utf-8") as f:
             character_prompt = f.read().strip()
@@ -174,7 +174,7 @@ def get_gemini_response(user_id, user_prompt):
         return "❌ 無法取得 LLM 回覆，請稍後再試。"
 
 
-def get_gemini_responseold(user_id, user_prompt):
+def get_gemini_response(user_id, user_prompt):
     try:
         with open("system_prompt.txt", "r", encoding="utf-8") as f:
             character_prompt = f.read().strip()
@@ -568,7 +568,7 @@ def handle_emotion_message(user_input, user_id, title, name):
         msg_func = random.choices(
             [lambda: get_gemini_response(user_id, f"請用充滿「{category}」情緒的方式對我說一句話"),
              lambda: get_emotion_line(category)],
-            weights=[0.9, 0.1]
+            weights=[0.1, 0.9]
         )[0]
         msg = msg_func()
 
