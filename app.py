@@ -170,6 +170,7 @@ def get_gemini_response(user_id, user_prompt):
             return "❌ 無法取得 LLM 回覆，請稍後再試。"
     except Exception as e:
         logging.error("Ollama 回應失敗: %s", str(e))
+        print("Ollama 回應失敗: %s" % str(e))  # 這樣 Render log 必定看到
         return "❌ 無法取得 LLM 回覆，請稍後再試。"
 
 
