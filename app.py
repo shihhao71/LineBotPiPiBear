@@ -225,18 +225,19 @@ def get_openrouter_response(user_id, user_prompt, model="google/gemini-pro"):
     try:
         with open("system_prompt.txt", "r", encoding="utf-8") as f:
             character_prompt = f.read().strip()
-
+        
         history_prompt = build_prompt_with_memory(user_id)
         full_prompt = f"{character_prompt}\n\n{history_prompt}\n你：{user_prompt}"
-        print(f"🔑 API Key loaded: {OPENROUTER_API_KEY[:10]}...")  # 不要印全 key，避免外洩
 
-        if not OPENROUTER_API_KEY:
+        api_key = config.get("openrouter_api_key", "")
+        
+        if not api_key:
             logging.error("未設定 OpenRouter API 金鑰")
             return "❌ 未設定 OpenRouter API 金鑰，請先確認設定檔"
 
         url = "https://openrouter.ai/api/v1/chat/completions"
         headers = {
-            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+            "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json"
         }
 
