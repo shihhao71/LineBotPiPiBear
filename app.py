@@ -29,11 +29,16 @@ LINE_ACCESS_TOKEN = config.get("line_access_token")
 LINE_CHANNEL_SECRET = config.get("line_channel_secret")
 NGROK_BASE_URL = config.get("ngrok_base_url")
 CWA_API_KEY = config.get("cwa_api_key")
+OPENROUTER_API_KEY = config.get("openrouter_api_key", "")
+
+
+
+
 
 scheduler = BackgroundScheduler(daemon=True)
 
-AI_Model_Source= config.get("ai_model_source", "gemini")  #gemini|groq|openrouter
-Openrouter_AI_Model= config.get("Openrouter_AI_Model")  #"qwen/qwen2.5-vl-72b-instruct:free"
+AI_Model_Source= config.get("ai_model_source", "gemini")  
+
 
 logging.basicConfig(filename='app.log', level=logging.INFO, format='%(asctime)s %(levelname)s:%(message)s')
 
@@ -48,7 +53,7 @@ last_push_time = {}
 
 # === 記憶系統（原 memory_utils.py）===
 MEMORY_FOLDER = "user_log"
-MAX_HISTORY = 1
+MAX_HISTORY = 20
 os.makedirs(MEMORY_FOLDER, exist_ok=True)
 
 def get_quick_reply_items():
@@ -215,13 +220,69 @@ def get_gemini_response(user_id, user_prompt):
 
     
 
+#"google/gemini-pro" "anthropic/claude-3-sonnet" "mistralai/mixtral-8x7b" "meta-llama/llama-3-70b-instruct"
+def get_openrouter_response(user_id, user_prompt, model="google/gemini-pro"):    
+    try:
+        with open("system_prompt.txt", "r", encoding="utf-8") as f:
+            character_prompt = f.read().strip()
+
+        history_prompt = build_prompt_with_memory(user_id)
+        full_prompt = f"{character_prompt}\n\n{history_prompt}\n你：{user_prompt}"
+
+        if not OPENROUTER_API_KEY:
+            logging.error("未設定 OpenRouter API 金鑰")
+            return "❌ 未設定 OpenRouter API 金鑰，請先確認設定檔"
+
+        url = "https://openrouter.ai/api/v1/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+            "Content-Type": "application/json"
+        }
+
+        data = {
+            "model": model,
+            "messages": [
+                {"role": "system", "content": character_prompt},
+                {"role": "user", "content": full_prompt}
+            ]
+        }
+
+        res = requests.post(url, headers=headers, json=data)
+        res_json = res.json()
+
+        reply = ""
+        if "choices" in res_json:
+            try:
+                reply = res_json["choices"][0]["message"]["content"].strip()
+                if not reply:
+                    raise ValueError("空回應")
+                append_user_message(user_id, "user", user_prompt)
+                append_user_message(user_id, "assistant", reply)
+                return reply
+            except Exception as e:
+                logging.warning(f"OpenRouter 回應格式錯誤或內容缺失：{e}")
+                reply = "😅 抱歉，皮熊想不出話來...可以再問一次嗎？"
+                append_user_message(user_id, "user", user_prompt)
+                append_user_message(user_id, "assistant", reply)
+                return reply
+        elif "error" in res_json:
+            logging.error(f"OpenRouter 回傳錯誤：{res_json}")
+            return f"⚠️ OpenRouter 錯誤：{res_json['error'].get('message', '未知錯誤')}"
+        else:
+            logging.error(f"OpenRouter 回傳未知格式：{res_json}")
+            return "❌ 無法取得 OpenRouter 回覆，請稍後再試。"
+    except Exception as e:
+        logging.error("OpenRouter 回應失敗: %s", str(e))
+        return "❌ 無法取得 OpenRouter 回覆，請稍後再試。"
 
 
 
 
-def get_ai_response(user_id, user_prompt, source="ollama"):
+
+
+def get_ai_response(user_id, user_prompt, source="gemini"):
     if source == "gemini":
-        return get_gemini_response(user_id, user_prompt)
+        return get_openrouter_response(user_id, user_prompt)
     elif source == "ollama":
         return get_ollama_response(user_id, user_prompt)
     else:
@@ -568,7 +629,7 @@ def handle_emotion_message(user_input, user_id, title, name):
 
     if category:
         msg_func = random.choices(
-            [lambda: get_ai_response(user_id, f"請用充滿「{category}」情緒的方式對我說一句話","ollama"),
+            [lambda: get_ai_response(user_id, f"請用充滿「{category}」情緒的方式對我說一句話","gemini"),
              lambda: get_emotion_line(category)],
             weights=[0.1, 0.9]
         )[0]
@@ -595,7 +656,7 @@ def handle_emotion_message(user_input, user_id, title, name):
 
 # === 新增：一般 Gemini 對話處理函式 ===
 def handle_general_chat(user_id, user_input, title, name):
-    gemini_msg = get_ai_response(user_id, user_input,"ollama")
+    gemini_msg = get_ai_response(user_id, user_input,"gemini")
     tone = load_combined_tone()
     
     greeting = get_greeting_for_user(user_id)
