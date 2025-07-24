@@ -719,6 +719,22 @@ def handle_message(event):
 
                 except Exception as e:
                     messages.append(TextMessage(text=f"⚠️ 無法讀取花費資料：{str(e)}"))
+            elif user_input == "查詢本月花費":
+                try:
+                    with open("usage_summary.json", "r", encoding="utf-8") as f:
+                        usage = json.load(f)
+                    this_month = datetime.now().strftime("%Y-%m")
+                    total_tokens = 0
+                    total_cost = 0.0
+                    for date_str, data in usage.items():
+                        if date_str.startswith(this_month):
+                            total_tokens += data.get("total_tokens", 0)
+                            total_cost += data.get("total_cost", 0.0)
+                    messages.append(TextMessage(
+                        text=f"📅 本月 Groq 使用統計：\nTokens：{total_tokens:,}\n金額：${total_cost:.6f} USD"))
+                except Exception as e:
+                    messages.append(TextMessage(text=f"⚠️ 無法讀取本月花費資料：{str(e)}"))
+        
             elif user_input == "天氣資訊":
                 date_info = get_today_info()
                 weather = get_weather_info(name)
