@@ -3,8 +3,8 @@
     "line_channel_secret": "f61b58e3b3916c2c7ab151c54ea132f9",
     "ngrok_base_url": "https://d389-60-248-151-141.ngrok-free.app",
     "cwa_api_key": "CWA-206E8622-173C-4E25-BFAE-3840A4943E42",
-    "gemini_api_key": "AIzaSyConK5wJ4pEbVqRbcpd3l4a1vG-PxChvJM",
-    "gemini2.0_api_key": "AIzaSyD-9RVLy5TOK4MHXe_DaKYCWus9Grk32Is",
+    "openrouter_api_key": "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",
     "ai_model_source": "gemini"
   }
+  
   
