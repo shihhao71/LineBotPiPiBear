@@ -48,7 +48,7 @@ last_push_time = {}
 
 # === 記憶系統（原 memory_utils.py）===
 MEMORY_FOLDER = "user_log"
-MAX_HISTORY = 20
+MAX_HISTORY = 1
 os.makedirs(MEMORY_FOLDER, exist_ok=True)
 
 def get_quick_reply_items():
