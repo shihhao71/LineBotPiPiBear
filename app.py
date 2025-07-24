@@ -217,6 +217,32 @@ def get_gemini_response(user_id, user_prompt):
         logging.error("Gemini 回應失敗: %s", str(e))
         return "❌ 無法取得 Gemini 回覆，請稍後再試。"
 
+def log_daily_groq_cost_to_json(model, total_tokens):
+    model_prices = {
+        "llama3-8b-8192": 0.13,
+        "llama3-70b-8192": 1.38,
+        "mixtral-8x7b-32768": 0.6,
+        "gemma-7b-it": 0.4
+    }
+    cost_per_million = model_prices.get(model, 0.5)
+    cost = (total_tokens / 1_000_000) * cost_per_million
+    today = datetime.now().strftime("%Y-%m-%d")
+
+    try:
+        with open("usage_summary.json", "r", encoding="utf-8") as f:
+            usage = json.load(f)
+    except FileNotFoundError:
+        usage = {}
+
+    if today not in usage:
+        usage[today] = {"total_tokens": 0, "total_cost": 0.0}
+    usage[today]["total_tokens"] += total_tokens
+    usage[today]["total_cost"] += cost
+
+    with open("usage_summary.json", "w", encoding="utf-8") as f:
+        json.dump(usage, f, ensure_ascii=False, indent=2)
+
+    return cost
 
     
 
@@ -255,8 +281,12 @@ def get_groq_response(user_id, user_prompt, model="llama3-8b-8192"):
 
         if "choices" in res_json:
             reply = res_json["choices"][0]["message"]["content"].strip()
+            usage = res_json.get("usage", {})
+            total_tokens = usage.get("total_tokens", 0)  # ← 這裡加入預設值
             append_user_message(user_id, "user", user_prompt)
             append_user_message(user_id, "assistant", reply)
+            log_daily_groq_cost_to_json(model, total_tokens)
+
             return reply
         elif "error" in res_json:
             logging.error(f"Groq 回傳錯誤：{res_json}")
@@ -677,7 +707,18 @@ def handle_message(event):
             if user_input in ["排行榜", "使用排行", "今天誰最黏皮熊？"]:
                 reply = get_today_usage_ranking()
                 messages = [reply_with_quick(reply)]
+            elif user_input == "查詢花費":
+                try:
+                    with open("usage_summary.json", "r", encoding="utf-8") as f:
+                        usage = json.load(f)
+                    today = datetime.now().strftime("%Y-%m-%d")
+                    today_data = usage.get(today, {"total_tokens": 0, "total_cost": 0.0})
+                    total_tokens = today_data["total_tokens"]
+                    total_cost = today_data["total_cost"]
+                    messages.append(TextMessage(text=f"📊 今日 Groq 使用：\nTokens：{total_tokens}\n金額：${total_cost:.6f} USD"))
 
+                except Exception as e:
+                    messages.append(TextMessage(text=f"⚠️ 無法讀取花費資料：{str(e)}"))
             elif user_input == "天氣資訊":
                 date_info = get_today_info()
                 weather = get_weather_info(name)
