@@ -129,7 +129,7 @@ def build_prompt_with_memory(user_id):
     ])
     return f"{profile_text}{history_text}"
 
-def get_gemini_response2(user_id, user_prompt):
+def get_ollama_response(user_id, user_prompt):
     try:
         with open("system_prompt.txt", "r", encoding="utf-8") as f:
             character_prompt = f.read().strip()
@@ -219,9 +219,11 @@ def get_gemini_response(user_id, user_prompt):
 
 
 
-def get_ai_response(user_id, user_prompt, source="gemini"):
+def get_ai_response(user_id, user_prompt, source="ollama"):
     if source == "gemini":
         return get_gemini_response(user_id, user_prompt)
+    elif source == "ollama":
+        return get_ollama_response(user_id, user_prompt)
     else:
         logging.error(f"❌ 不支援的 AI 來源：{source}")
         return f"⚠️ 不支援的 AI 來源：{source}"
@@ -566,7 +568,7 @@ def handle_emotion_message(user_input, user_id, title, name):
 
     if category:
         msg_func = random.choices(
-            [lambda: get_gemini_response(user_id, f"請用充滿「{category}」情緒的方式對我說一句話"),
+            [lambda: get_ai_response(user_id, f"請用充滿「{category}」情緒的方式對我說一句話","ollama"),
              lambda: get_emotion_line(category)],
             weights=[0.1, 0.9]
         )[0]
@@ -593,7 +595,7 @@ def handle_emotion_message(user_input, user_id, title, name):
 
 # === 新增：一般 Gemini 對話處理函式 ===
 def handle_general_chat(user_id, user_input, title, name):
-    gemini_msg = get_gemini_response(user_id, user_input)
+    gemini_msg = get_ai_response(user_id, user_input,"ollama")
     tone = load_combined_tone()
     
     greeting = get_greeting_for_user(user_id)
