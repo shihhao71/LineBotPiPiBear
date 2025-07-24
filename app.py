@@ -230,7 +230,8 @@ def get_openrouter_response(user_id, user_prompt, model="google/gemini-pro"):
         full_prompt = f"{character_prompt}\n\n{history_prompt}\n你：{user_prompt}"
 
         api_key = config.get("openrouter_api_key", "")
-        
+        print(f"🔍 OPENROUTER_API_KEY = {api_key[:15]}...")  # 印出開頭 15 碼
+
         if not api_key:
             logging.error("未設定 OpenRouter API 金鑰")
             return "❌ 未設定 OpenRouter API 金鑰，請先確認設定檔"
