@@ -220,7 +220,7 @@ def get_gemini_response(user_id, user_prompt):
 
     
 
-def get_groq_response(user_id, user_prompt, model="meta-llama/llama-4-scout-17b-16e-instruct"):
+def get_groq_response(user_id, user_prompt, model="llama3-8b-8192"):
     try:
         api_key = config.get("groq_api_key", "")
         if not api_key:
