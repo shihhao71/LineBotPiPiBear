@@ -228,6 +228,7 @@ def get_openrouter_response(user_id, user_prompt, model="google/gemini-pro"):
 
         history_prompt = build_prompt_with_memory(user_id)
         full_prompt = f"{character_prompt}\n\n{history_prompt}\n你：{user_prompt}"
+        print(f"🔑 API Key loaded: {OPENROUTER_API_KEY[:10]}...")  # 不要印全 key，避免外洩
 
         if not OPENROUTER_API_KEY:
             logging.error("未設定 OpenRouter API 金鑰")
