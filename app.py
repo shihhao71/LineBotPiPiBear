@@ -679,4 +679,4 @@ if __name__ == "__main__":
     start_scheduler()
     port = int(os.environ.get("PORT", 5050))  # 預設值5050，只在本機測試時用
     #app.run()
-    serve(app, host="0.0.0.0", port=5050)
+    serve(app, host="0.0.0.0", port=port)
