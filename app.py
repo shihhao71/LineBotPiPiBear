@@ -694,6 +694,7 @@ def handle_general_chat(user_id, user_input, title, name):
 @handler.add(MessageEvent, message=TextMessageContent)
 def handle_message(event):
     try:
+        messages = []  # ← 加在最一開始
         user_input = event.message.text
         user_id = event.source.user_id
 
