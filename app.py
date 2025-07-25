@@ -29,8 +29,22 @@ LINE_ACCESS_TOKEN = config.get("line_access_token")
 LINE_CHANNEL_SECRET = config.get("line_channel_secret")
 NGROK_BASE_URL = config.get("ngrok_base_url")
 CWA_API_KEY = config.get("cwa_api_key")
-GROQ_API_KEY = config.get("groq_api_key", "")
 
+# 1. 優先從環境變數取得
+GROQ_API_KEY = os.getenv("groq_api_key")
+
+# 2. 若環境變數沒設，再讀 config.json（方便本機開發）
+if not GROQ_API_KEY:
+    try:
+        with open("config.json") as f:
+            config = json.load(f)
+        GROQ_API_KEY = config.get("groq_api_key", "")
+    except Exception:
+        GROQ_API_KEY = ""
+
+# 3. 若還是沒有，警告（可選）
+if not GROQ_API_KEY:
+    raise ValueError("缺少 groq_api_key，請設環境變數或填入 config.json！")
 
 
 
@@ -248,7 +262,7 @@ def log_daily_groq_cost_to_json(model, total_tokens):
 
 def get_groq_response(user_id, user_prompt, model="llama3-8b-8192"):
     try:
-        api_key = config.get("groq_api_key", "")
+        api_key = GROQ_API_KEY
         if not api_key:
             logging.error("❌ 無法載入 Groq API 金鑰，請檢查 config.json")
             return "❌ Groq API 金鑰未設定"
