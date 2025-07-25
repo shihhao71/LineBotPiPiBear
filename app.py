@@ -25,10 +25,9 @@ from linebot.v3.webhooks import (
 with open("config.json", "r", encoding="utf-8") as f:
     config = json.load(f)
 
-LINE_ACCESS_TOKEN = config.get("line_access_token")
-LINE_CHANNEL_SECRET = config.get("line_channel_secret")
-NGROK_BASE_URL = config.get("ngrok_base_url")
-CWA_API_KEY = config.get("cwa_api_key")
+LINE_ACCESS_TOKEN = os.getenv("line_access_token")
+LINE_CHANNEL_SECRET = os.getenv("line_channel_secret")
+CWA_API_KEY = os.getenv("cwa_api_key")
 
 # 1. 優先從環境變數取得
 GROQ_API_KEY = os.getenv("groq_api_key")
