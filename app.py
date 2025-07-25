@@ -11,6 +11,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from linebot.v3.messaging.exceptions import ApiException
 from datetime import datetime, timedelta
 from collections import defaultdict
+from dotenv import load_dotenv
 from flask import Flask, request, abort, send_from_directory
 from linebot.v3 import WebhookHandler
 from linebot.v3.exceptions import InvalidSignatureError
@@ -21,11 +22,13 @@ from linebot.v3.webhooks import (
     LocationMessageContent
 )
 
+load_dotenv()
 
-
-LINE_ACCESS_TOKEN = os.getenv("line_access_token")
-LINE_CHANNEL_SECRET = os.getenv("line_channel_secret")
-CWA_API_KEY = os.getenv("cwa_api_key")
+LINE_ACCESS_TOKEN = os.getenv("LINE_ACCESS_TOKEN")
+LINE_CHANNEL_SECRET = os.getenv("LINE_CHANNEL_SECRET")
+CWA_API_KEY = os.getenv("CWA_API_KEY")
+# 1. 優先從環境變數取得
+GROQ_API_KEY = os.getenv("groq_api_key")
 # 1. 優先從環境變數取得
 GROQ_API_KEY = os.getenv("groq_api_key")
 
