@@ -3,8 +3,7 @@
     "line_channel_secret": "",
     "ngrok_base_url": "",
     "cwa_api_key": "",
-    "groq_api_key": "",
-    "ai_model_source": "groq"
+    "groq_api_key": "" 
 }
   
   
