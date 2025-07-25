@@ -1,8 +1,8 @@
 {
-    "line_access_token": "6qSNxwQX5urtJiqAi4neZ32dvgvfru6BmTGRik3ATFX+l7lQ1jg+gUic+yx6afJfpOZ8ARh3z2+HDs4zcnY1nKfd/Qlg2GUOzHRxu6Ao8gcfPrev7EdIXP+XUm7tAISPiMOssQMmaK9qKL0ewIjEwAdB04t89/1O/w1cDnyilFU=",
-    "line_channel_secret": "f61b58e3b3916c2c7ab151c54ea132f9",
-    "ngrok_base_url": "https://d389-60-248-151-141.ngrok-free.app",
-    "cwa_api_key": "CWA-206E8622-173C-4E25-BFAE-3840A4943E42",
+    "line_access_token": "",
+    "line_channel_secret": "",
+    "ngrok_base_url": "",
+    "cwa_api_key": "",
     "groq_api_key": "",
     "ai_model_source": "groq"
 }
