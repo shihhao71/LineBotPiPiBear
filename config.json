@@ -1,8 +1,8 @@
 {
-    "line_access_token": "***REMOVED***",
-    "line_channel_secret": "***REMOVED***",
-    "ngrok_base_url": "https://d389-60-248-151-141.ngrok-free.app",
-    "cwa_api_key": "***REMOVED***",
+    "line_access_token": "",
+    "line_channel_secret": "",
+    "ngrok_base_url": "",
+    "cwa_api_key": "",
     "groq_api_key": "",
     "ai_model_source": "groq"
 }
