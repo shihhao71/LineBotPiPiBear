@@ -3,3 +3,4 @@ line-bot-sdk==3.*
 requests
 apscheduler
 waitress
+python-dotenv
