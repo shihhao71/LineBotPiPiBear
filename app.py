@@ -21,29 +21,20 @@ from linebot.v3.webhooks import (
     LocationMessageContent
 )
 
-# 讀取設定
-with open("config.json", "r", encoding="utf-8") as f:
-    config = json.load(f)
+
 
 LINE_ACCESS_TOKEN = os.getenv("line_access_token")
 LINE_CHANNEL_SECRET = os.getenv("line_channel_secret")
 CWA_API_KEY = os.getenv("cwa_api_key")
-
 # 1. 優先從環境變數取得
 GROQ_API_KEY = os.getenv("groq_api_key")
 
 # 2. 若環境變數沒設，再讀 config.json（方便本機開發）
-if not GROQ_API_KEY:
-    try:
-        with open("config.json") as f:
-            config = json.load(f)
-        GROQ_API_KEY = config.get("groq_api_key", "")
-    except Exception:
-        GROQ_API_KEY = ""
 
 # 3. 若還是沒有，警告（可選）
 if not GROQ_API_KEY:
     raise ValueError("缺少 groq_api_key，請設環境變數或填入 config.json！")
+
 
 
 
@@ -199,8 +190,9 @@ def get_gemini_response(user_id, user_prompt):
 
         history_prompt = build_prompt_with_memory(user_id)
         full_prompt = f"{character_prompt}\n\n{history_prompt}\n你：{user_prompt}"
-        
-        url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={config.get('gemini_api_key')}"
+
+        GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")  # ← 你 Render 已有設定
+        url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
         #url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={config.get('gemini2.0_api_key')}"
         res = requests.post(url, headers={"Content-Type": "application/json"}, json={"contents": [{"parts": [{"text": full_prompt}]}]})
         res_json = res.json()
