@@ -3,7 +3,7 @@
     "line_channel_secret": "f61b58e3b3916c2c7ab151c54ea132f9",
     "ngrok_base_url": "https://d389-60-248-151-141.ngrok-free.app",
     "cwa_api_key": "CWA-206E8622-173C-4E25-BFAE-3840A4943E42",
-    "groq_api_key": "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",
+    "groq_api_key": "",
     "ai_model_source": "groq"
 }
   
