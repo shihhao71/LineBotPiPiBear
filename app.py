@@ -108,7 +108,7 @@ def append_user_message(user_id, role, content):
         "content": content,
         "timestamp": datetime.now().isoformat()
     })
-
+ 
     # 限制歷史數量
     history = history[-MAX_HISTORY:]
 
