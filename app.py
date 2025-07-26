@@ -31,7 +31,7 @@ CWA_API_KEY = os.getenv("CWA_API_KEY")
 GROQ_API_KEY = os.getenv("groq_api_key")
 # 1. 優先從環境變數取得
 GROQ_API_KEY = os.getenv("groq_api_key")
-
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")  # ← 你 Render 已有設定
 # 2. 若環境變數沒設，再讀 config.json（方便本機開發）
 
 # 3. 若還是沒有，警告（可選）
@@ -312,11 +312,13 @@ def get_groq_response(user_id, user_prompt, model="llama3-8b-8192"):
 
 
 
-def get_ai_response(user_id, user_prompt, source="groq"):
+def get_ai_response(user_id, user_prompt, source="gemini"):
     if source == "groq":
         return get_groq_response(user_id, user_prompt)
     elif source == "ollama":
         return get_ollama_response(user_id, user_prompt)
+    elif source == "gemini":
+        return get_gemini_response(user_id, user_prompt)    
     else:
         logging.error(f"❌ 不支援的 AI 來源：{source}")
         return f"⚠️ 不支援的 AI 來源：{source}"
@@ -662,7 +664,7 @@ def handle_emotion_message(user_input, user_id, title, name):
 
     if category:
         msg_func = random.choices(
-            [lambda: get_ai_response(user_id, f"請用充滿「{category}」情緒的方式對我說一句話","groq"),
+            [lambda: get_ai_response(user_id, f"請用充滿「{category}」情緒的方式對我說一句話","gemini"),
              lambda: get_emotion_line(category)],
             weights=[0.1, 0.9]
         )[0]
@@ -689,7 +691,7 @@ def handle_emotion_message(user_input, user_id, title, name):
 
 # === 新增：一般 Gemini 對話處理函式 ===
 def handle_general_chat(user_id, user_input, title, name):
-    gemini_msg = get_ai_response(user_id, user_input,"groq")
+    gemini_msg = get_ai_response(user_id, user_input,"gemini")
     tone = load_combined_tone()
     
     greeting = get_greeting_for_user(user_id)
