@@ -195,7 +195,7 @@ def get_gemini_response(user_id, user_prompt):
         full_prompt = f"{character_prompt}\n\n{history_prompt}\n你：{user_prompt}"
 
         GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")  # ← 你 Render 已有設定
-        url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+        url = f"https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash-lite:generateContent?key={GEMINI_API_KEY}"
         #url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={config.get('gemini2.0_api_key')}"
         res = requests.post(url, headers={"Content-Type": "application/json"}, json={"contents": [{"parts": [{"text": full_prompt}]}]})
         res_json = res.json()
