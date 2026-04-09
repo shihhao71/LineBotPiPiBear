@@ -27,16 +27,17 @@ load_dotenv()
 LINE_ACCESS_TOKEN = os.getenv("LINE_ACCESS_TOKEN")
 LINE_CHANNEL_SECRET = os.getenv("LINE_CHANNEL_SECRET")
 CWA_API_KEY = os.getenv("CWA_API_KEY")
-# 1. 優先從環境變數取得
-GROQ_API_KEY = os.getenv("groq_api_key")
-# 1. 優先從環境變數取得
-GROQ_API_KEY = os.getenv("groq_api_key")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")  # ← 你 Render 已有設定
+
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")  # 可留著，備用
+DEFAULT_AI_SOURCE = "groq"
+DEFAULT_GROQ_MODEL = "llama-3.3-70b-versatile"
+BOT_NAME = "SSS1"
 # 2. 若環境變數沒設，再讀 config.json（方便本機開發）
 
 # 3. 若還是沒有，警告（可選）
 if not GROQ_API_KEY:
-    raise ValueError("缺少 groq_api_key，請設環境變數或填入 config.json！")
+    raise ValueError("缺少 GROQ_API_KEY，請設環境變數或填入 config.json！")
 
 
 
@@ -229,6 +230,7 @@ def log_daily_groq_cost_to_json(model, total_tokens):
     model_prices = {
         "llama3-8b-8192": 0.13,
         "llama3-70b-8192": 1.38,
+        "llama-3.3-70b-versatile": 0.5,
         "mixtral-8x7b-32768": 0.6,
         "gemma-7b-it": 0.4
     }
@@ -254,7 +256,7 @@ def log_daily_groq_cost_to_json(model, total_tokens):
 
     
 
-def get_groq_response(user_id, user_prompt, model="llama3-8b-8192"):
+def get_groq_response(user_id, user_prompt, model=DEFAULT_GROQ_MODEL):
     try:
         api_key = GROQ_API_KEY
         if not api_key:
@@ -284,7 +286,7 @@ def get_groq_response(user_id, user_prompt, model="llama3-8b-8192"):
         }
 
         url = "https://api.groq.com/openai/v1/chat/completions"
-        res = requests.post(url, headers=headers, json=data)
+        res = requests.post(url, headers=headers, json=data, timeout=30)
         res_json = res.json()
 
         if "choices" in res_json:
@@ -312,7 +314,7 @@ def get_groq_response(user_id, user_prompt, model="llama3-8b-8192"):
 
 
 
-def get_ai_response(user_id, user_prompt, source="gemini"):
+def get_ai_response(user_id, user_prompt, source=DEFAULT_AI_SOURCE):
     if source == "groq":
         return get_groq_response(user_id, user_prompt)
     elif source == "ollama":
@@ -663,9 +665,9 @@ def handle_emotion_message(user_input, user_id, title, name):
         category = "hit"
 
     if category:
-        msg_func = random.choices(
-            [lambda: get_ai_response(user_id, f"請用充滿「{category}」情緒的方式對我說一句話","gemini"),
-             lambda: get_emotion_line(category)],
+       msg_func = random.choices(
+           [lambda: get_ai_response(user_id, f"請用充滿「{category}」情緒的方式對我說一句話", "groq"),
+            lambda: get_emotion_line(category)],
             weights=[0.1, 0.9]
         )[0]
         msg = msg_func()
@@ -676,7 +678,7 @@ def handle_emotion_message(user_input, user_id, title, name):
             messages.append(ImageMessage(original_content_url=img_url, preview_image_url=img_url))
 
         # 合併文字並建立 TextMessage 物件
-        full_text = f"皮熊:{title}! {msg}"
+        full_text = f"{BOT_NAME}:{title}! {msg}"
         text_msg = reply_with_quick(full_text)
         messages.append(text_msg)
 
@@ -691,11 +693,13 @@ def handle_emotion_message(user_input, user_id, title, name):
 
 # === 新增：一般 Gemini 對話處理函式 ===
 def handle_general_chat(user_id, user_input, title, name):
-    gemini_msg = get_ai_response(user_id, user_input,"gemini")
+    #gemini_msg = get_ai_response(user_id, user_input,"gemini")
+    ai_msg = get_ai_response(user_id, user_input, "groq")
     tone = load_combined_tone()
     
     greeting = get_greeting_for_user(user_id)
-    full_msg = f"皮熊:{gemini_msg}\n{tone}\n🧸 {greeting}\n你想聽我說什麼呢？"
+    full_msg = f"{BOT_NAME}:{ai_msg}\n{tone}\n🧸 {greeting}\n你想聽我說什麼呢？"
+    #full_msg = f"皮熊:{gemini_msg}\n{tone}\n🧸 {greeting}\n你想聽我說什麼呢？"
     #full_msg = f"皮熊:{title}!{gemini_msg}\n{tone}\n🧸 {greeting}\n你想聽我說什麼呢？"
     
     return [TextMessage(text=full_msg, quick_reply=QuickReply(items=get_quick_reply_items()))]
