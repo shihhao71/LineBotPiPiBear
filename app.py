@@ -665,12 +665,15 @@ def handle_emotion_message(user_input, user_id, title, name):
         category = "hit"
 
     if category:
-       msg_func = random.choices(
-           [lambda: get_ai_response(user_id, f"請用充滿「{category}」情緒的方式對我說一句話", "groq"),
-            lambda: get_emotion_line(category)],
-            weights=[0.1, 0.9]
-        )[0]
-        msg = msg_func()
+    msg_func = random.choices(
+        [
+            lambda: get_ai_response(user_id, f"請用充滿「{category}」情緒的方式對我說一句話", "groq"),
+            lambda: get_emotion_line(category)
+        ],
+        weights=[0.1, 0.9]
+    )[0]
+
+    msg = msg_func()
 
         messages = []
         img_url = get_random_imgur_link()
