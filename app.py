@@ -37,7 +37,7 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")  # 保留備用
 DEFAULT_AI_SOURCE = "groq"
 DEFAULT_GROQ_MODEL = "llama-3.3-70b-versatile"
-BOT_NAME = "SSS1"
+BOT_NAME = "皮"
 
 if not GROQ_API_KEY:
     raise ValueError("缺少 GROQ_API_KEY，請先在 Render 環境變數中設定！")
