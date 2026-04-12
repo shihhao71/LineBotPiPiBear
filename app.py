@@ -166,7 +166,7 @@ def get_ollama_response(user_id, user_prompt):
                 return reply
             except Exception as e:
                 logging.warning(f"Ollama 回應格式錯誤或內容缺失：{e}")
-                reply = "😅 抱歉，SSS1 想不出話來...可以再問一次嗎？"
+                reply = "😅 抱歉，皮 想不出話來...可以再問一次嗎？"
                 append_user_message(user_id, "user", user_prompt)
                 append_user_message(user_id, "assistant", reply)
                 return reply
@@ -208,7 +208,7 @@ def get_gemini_response(user_id, user_prompt):
                 return reply
             except Exception as e:
                 logging.warning(f"Gemini 回應格式錯誤或內容缺失：{e}")
-                reply = "😅 抱歉，SSS1 想不出話來...可以再問一次嗎？"
+                reply = "😅 抱歉，皮 想不出話來...可以再問一次嗎？"
                 append_user_message(user_id, "user", user_prompt)
                 append_user_message(user_id, "assistant", reply)
                 return reply
@@ -514,7 +514,7 @@ def get_today_usage_ranking():
     counts = defaultdict(int)
 
     if not os.path.exists("user_usage.log"):
-        return "今天還沒人來找SSS1玩QQ"
+        return "今天還沒人來找皮玩QQ"
 
     with open("user_usage.log", "r", encoding="utf-8") as f:
         for line in f:
@@ -526,10 +526,10 @@ def get_today_usage_ranking():
                 counts[name] += 1
 
     if not counts:
-        return "今天還沒人來找SSS1玩QQ"
+        return "今天還沒人來找皮玩QQ"
 
     sorted_counts = sorted(counts.items(), key=lambda x: x[1], reverse=True)
-    return "🐾 今日 SSS1 陪伴排行榜 🧸\n" + "\n".join(
+    return "🐾 今日 皮 陪伴排行榜 🧸\n" + "\n".join(
         [f"{i+1}. {name}：{count} 次" for i, (name, count) in enumerate(sorted_counts[:5])]
     )
 
@@ -538,7 +538,7 @@ def get_greeting_for_user(user_id):
     profile = load_user_profiles().get(user_id, {})
     name = profile.get("name", "朋友")
     relation = profile.get("與皮熊關係", "")
-    return f"{name}（{relation}），新的一天開始囉～SSS1陪你！" if relation else f"{name}，新的一天開始囉～SSS1陪你！"
+    return f"{name}（{relation}），新的一天開始囉～皮陪你！" if relation else f"{name}，新的一天開始囉～皮陪你！"
 
 
 def get_today_info():
