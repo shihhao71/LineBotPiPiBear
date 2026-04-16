@@ -916,6 +916,53 @@ def serve_image(filename):
     return send_from_directory("Pic", filename)
 
 
+@app.route("/test_ollama")
+def test_ollama():
+    lines = []
+    lines.append("=== 測試 Ollama Tunnel ===\n")
+    lines.append(f"URL: {OLLAMA_TUNNEL_URL}")
+    lines.append(f"Model: {OLLAMA_TUNNEL_MODEL}\n")
+
+    try:
+        r = requests.get(
+            f"{OLLAMA_TUNNEL_URL}/api/tags",
+            headers={"X-LT-Token": OLLAMA_TUNNEL_TOKEN},
+            timeout=10
+        )
+        lines.append(f"[1] /api/tags 狀態碼: {r.status_code}")
+        if r.status_code == 200:
+            models = [m["name"] for m in r.json().get("models", [])]
+            lines.append(f"    可用模型: {models}")
+        else:
+            lines.append(f"    回應: {r.text[:200]}")
+    except Exception as e:
+        lines.append(f"[1] /api/tags 失敗: {e}")
+
+    lines.append("")
+
+    try:
+        r = requests.post(
+            f"{OLLAMA_TUNNEL_URL}/api/chat",
+            headers={"Content-Type": "application/json", "X-LT-Token": OLLAMA_TUNNEL_TOKEN},
+            json={
+                "model": OLLAMA_TUNNEL_MODEL,
+                "messages": [{"role": "user", "content": "你好"}],
+                "stream": False,
+            },
+            timeout=60
+        )
+        lines.append(f"[2] /api/chat 狀態碼: {r.status_code}")
+        if r.status_code == 200:
+            reply = r.json().get("message", {}).get("content", "").strip()
+            lines.append(f"    AI 回覆: {reply[:100]}")
+        else:
+            lines.append(f"    回應: {r.text[:200]}")
+    except Exception as e:
+        lines.append(f"[2] /api/chat 失敗: {e}")
+
+    return "\n".join(lines), 200, {"Content-Type": "text/plain; charset=utf-8"}
+
+
 if __name__ == "__main__":
     start_scheduler()
     port = int(os.environ.get("PORT", 5050))
