@@ -35,7 +35,7 @@ CWA_API_KEY = os.getenv("CWA_API_KEY")
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")  # 保留備用
-DEFAULT_AI_SOURCE = "groq"
+DEFAULT_AI_SOURCE = "ollama_tunnel"
 DEFAULT_GROQ_MODEL = "llama-3.3-70b-versatile"
 BOT_NAME = "皮"
 
