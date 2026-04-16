@@ -39,10 +39,10 @@ DEFAULT_AI_SOURCE = "ollama_tunnel"
 DEFAULT_GROQ_MODEL = "llama-3.3-70b-versatile"
 BOT_NAME = "皮"
 
-# Ollama Cloudflare Tunnel 設定
-OLLAMA_TUNNEL_URL = os.getenv("OLLAMA_TUNNEL_URL", "https://took-honey-simon-star.trycloudflare.com")
-OLLAMA_TUNNEL_TOKEN = os.getenv("OLLAMA_TUNNEL_TOKEN", "Letoy-zKP5lHteWFhAtalQdvOkzy_acAd3trOq")
-OLLAMA_TUNNEL_MODEL = os.getenv("OLLAMA_TUNNEL_MODEL", "qwen3.5:latest")
+# Ollama Cloudflare Tunnel 設定（從 Render 環境變數讀取，不寫在程式碼裡）
+OLLAMA_TUNNEL_URL = os.getenv("OLLAMA_TUNNEL_URL", "")
+OLLAMA_TUNNEL_TOKEN = os.getenv("OLLAMA_TUNNEL_TOKEN", "")
+OLLAMA_TUNNEL_MODEL = os.getenv("OLLAMA_TUNNEL_MODEL", "qwen3:8b")
 
 # AI 來源偏好設定檔
 AI_SOURCE_FILE = "user_ai_source.json"
@@ -365,7 +365,7 @@ def get_ollama_tunnel_response(user_id, user_prompt):
             ],
             "stream": False,
         }
-        res = requests.post(url, headers=headers, json=payload, timeout=60)
+        res = requests.post(url, headers=headers, json=payload, timeout=120)
         res_json = res.json()
 
         reply = res_json.get("message", {}).get("content", "").strip()
@@ -376,6 +376,9 @@ def get_ollama_tunnel_response(user_id, user_prompt):
         append_user_message(user_id, "assistant", reply)
         return reply
 
+    except requests.exceptions.Timeout:
+        logging.error("Ollama Tunnel 逾時")
+        return "⏱️ Ollama 回應太慢，請再試一次或輸入「切換AI groq」改用雲端。"
     except Exception as e:
         logging.error("Ollama Tunnel 回應失敗: %s", str(e))
         return "❌ 無法取得 Ollama Tunnel 回覆，請稍後再試。"
