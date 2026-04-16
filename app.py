@@ -39,6 +39,20 @@ DEFAULT_AI_SOURCE = "groq"
 DEFAULT_GROQ_MODEL = "llama-3.3-70b-versatile"
 BOT_NAME = "皮"
 
+# Ollama Cloudflare Tunnel 設定
+OLLAMA_TUNNEL_URL = os.getenv("OLLAMA_TUNNEL_URL", "https://took-honey-simon-star.trycloudflare.com")
+OLLAMA_TUNNEL_TOKEN = os.getenv("OLLAMA_TUNNEL_TOKEN", "Letoy-zKP5lHteWFhAtalQdvOkzy_acAd3trOq")
+OLLAMA_TUNNEL_MODEL = os.getenv("OLLAMA_TUNNEL_MODEL", "qwen3.5:latest")
+
+# AI 來源偏好設定檔
+AI_SOURCE_FILE = "user_ai_source.json"
+AI_SOURCE_LABELS = {
+    "groq": "☁️ Groq（雲端）",
+    "gemini": "🔮 Gemini（雲端）",
+    "ollama": "🏠 Ollama 內網",
+    "ollama_tunnel": "🔒 Ollama 外網 Tunnel",
+}
+
 if not GROQ_API_KEY:
     raise ValueError("缺少 GROQ_API_KEY，請先在 Render 環境變數中設定！")
 
@@ -312,13 +326,72 @@ def get_groq_response(user_id, user_prompt, model=DEFAULT_GROQ_MODEL):
         return "❌ 無法取得 Groq 回覆，請稍後再試。"
 
 
-def get_ai_response(user_id, user_prompt, source=DEFAULT_AI_SOURCE):
+def load_user_ai_source():
+    try:
+        with open(AI_SOURCE_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
+def save_user_ai_source(user_id, source):
+    data = load_user_ai_source()
+    data[user_id] = source
+    with open(AI_SOURCE_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+
+def get_user_ai_source(user_id):
+    return load_user_ai_source().get(user_id, DEFAULT_AI_SOURCE)
+
+
+def get_ollama_tunnel_response(user_id, user_prompt):
+    try:
+        with open("system_prompt.txt", "r", encoding="utf-8") as f:
+            character_prompt = f.read().strip()
+
+        history_prompt = build_prompt_with_memory(user_id)
+
+        url = f"{OLLAMA_TUNNEL_URL}/api/chat"
+        headers = {
+            "Content-Type": "application/json",
+            "X-LT-Token": OLLAMA_TUNNEL_TOKEN,
+        }
+        payload = {
+            "model": OLLAMA_TUNNEL_MODEL,
+            "messages": [
+                {"role": "system", "content": character_prompt},
+                {"role": "user", "content": f"{history_prompt}\n你：{user_prompt}"},
+            ],
+            "stream": False,
+        }
+        res = requests.post(url, headers=headers, json=payload, timeout=60)
+        res_json = res.json()
+
+        reply = res_json.get("message", {}).get("content", "").strip()
+        if not reply:
+            raise ValueError(f"空回應：{res_json}")
+
+        append_user_message(user_id, "user", user_prompt)
+        append_user_message(user_id, "assistant", reply)
+        return reply
+
+    except Exception as e:
+        logging.error("Ollama Tunnel 回應失敗: %s", str(e))
+        return "❌ 無法取得 Ollama Tunnel 回覆，請稍後再試。"
+
+
+def get_ai_response(user_id, user_prompt, source=None):
+    if source is None:
+        source = get_user_ai_source(user_id)
     if source == "groq":
         return get_groq_response(user_id, user_prompt)
     elif source == "ollama":
         return get_ollama_response(user_id, user_prompt)
     elif source == "gemini":
         return get_gemini_response(user_id, user_prompt)
+    elif source == "ollama_tunnel":
+        return get_ollama_tunnel_response(user_id, user_prompt)
     else:
         logging.error(f"❌ 不支援的 AI 來源：{source}")
         return f"⚠️ 不支援的 AI 來源：{source}"
@@ -677,7 +750,6 @@ def handle_emotion_message(user_input, user_id, title, name):
                 lambda: get_ai_response(
                     user_id,
                     f"請用充滿「{category}」情緒的方式對我說一句話",
-                    "groq"
                 ),
                 lambda: get_emotion_line(category)
             ],
@@ -706,7 +778,7 @@ def handle_emotion_message(user_input, user_id, title, name):
 
 
 def handle_general_chat(user_id, user_input, title, name):
-    ai_msg = get_ai_response(user_id, user_input, "groq")
+    ai_msg = get_ai_response(user_id, user_input)
     tone = load_combined_tone()
 
     greeting = get_greeting_for_user(user_id)
@@ -729,7 +801,32 @@ def handle_message(event):
             title = get_title_by_name(name)
             log_user_usage(user_id, name)
 
-            if user_input in ["排行榜", "使用排行", "今天誰最黏皮熊？"]:
+            if user_input.startswith("切換AI ") or user_input.startswith("切換ai "):
+                source_key = user_input.split(" ", 1)[1].strip().lower()
+                source_alias = {
+                    "groq": "groq",
+                    "gemini": "gemini",
+                    "ollama": "ollama",
+                    "內網": "ollama",
+                    "tunnel": "ollama_tunnel",
+                    "外網": "ollama_tunnel",
+                    "ollama_tunnel": "ollama_tunnel",
+                }
+                source = source_alias.get(source_key)
+                if source:
+                    save_user_ai_source(user_id, source)
+                    label = AI_SOURCE_LABELS.get(source, source)
+                    messages = [reply_with_quick(f"✅ 已切換為 {label}！\n之後的對話都會用這個模型回覆你唷～")]
+                else:
+                    options = "\n".join([f"• {k}（{v}）" for k, v in AI_SOURCE_LABELS.items()])
+                    messages = [reply_with_quick(f"⚠️ 不支援的選項，請用以下格式：\n切換AI <來源>\n\n可選：\n{options}")]
+
+            elif user_input in ["目前AI", "AI狀態", "用哪個AI"]:
+                current = get_user_ai_source(user_id)
+                label = AI_SOURCE_LABELS.get(current, current)
+                messages = [reply_with_quick(f"🤖 目前使用：{label}\n\n輸入「切換AI groq/gemini/ollama/外網」可切換")]
+
+            elif user_input in ["排行榜", "使用排行", "今天誰最黏皮熊？"]:
                 reply = get_today_usage_ranking()
                 messages = [reply_with_quick(reply)]
 
