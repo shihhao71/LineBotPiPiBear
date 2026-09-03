@@ -364,6 +364,9 @@ def get_ollama_tunnel_response(user_id, user_prompt):
                 {"role": "user", "content": f"{history_prompt}\n你：{user_prompt}"},
             ],
             "stream": False,
+            # gemma4 是思考型模型，預設每次會先產出上千字的內部推理（使用者看不到），
+            # 導致回應要 8 秒。關掉後只剩 1.4 秒，且實際回覆內容反而更完整。
+            "think": False,
         }
         # LINE 的 reply_token 效期很短，等 120 秒毫無意義（等到了也送不出去）。
         # 設 20 秒：失敗就讓 get_ai_response 自動 fallback 到 Groq，整體仍在時限內。
