@@ -365,7 +365,9 @@ def get_ollama_tunnel_response(user_id, user_prompt):
             ],
             "stream": False,
         }
-        res = requests.post(url, headers=headers, json=payload, timeout=120)
+        # LINE 的 reply_token 效期很短，等 120 秒毫無意義（等到了也送不出去）。
+        # 設 20 秒：失敗就讓 get_ai_response 自動 fallback 到 Groq，整體仍在時限內。
+        res = requests.post(url, headers=headers, json=payload, timeout=20)
         res_json = res.json()
 
         reply = res_json.get("message", {}).get("content", "").strip()
@@ -384,20 +386,40 @@ def get_ollama_tunnel_response(user_id, user_prompt):
         return "❌ 無法取得 Ollama Tunnel 回覆，請稍後再試。"
 
 
+# 各 get_*_response 失敗時回傳的字串開頭，用來判斷該來源是否失敗
+_FAIL_PREFIXES = ("❌", "⚠️", "⏱️")
+
+
+def _is_failure(reply):
+    return (not reply) or reply.startswith(_FAIL_PREFIXES)
+
+
 def get_ai_response(user_id, user_prompt, source=None):
     if source is None:
         source = get_user_ai_source(user_id)
-    if source == "groq":
-        return get_groq_response(user_id, user_prompt)
-    elif source == "ollama":
-        return get_ollama_response(user_id, user_prompt)
-    elif source == "gemini":
-        return get_gemini_response(user_id, user_prompt)
-    elif source == "ollama_tunnel":
-        return get_ollama_tunnel_response(user_id, user_prompt)
-    else:
+
+    handlers = {
+        "groq": get_groq_response,
+        "ollama": get_ollama_response,
+        "gemini": get_gemini_response,
+        "ollama_tunnel": get_ollama_tunnel_response,
+    }
+    handler = handlers.get(source)
+    if handler is None:
         logging.error(f"❌ 不支援的 AI 來源：{source}")
         return f"⚠️ 不支援的 AI 來源：{source}"
+
+    reply = handler(user_id, user_prompt)
+
+    # 主來源失敗時自動改走 Groq，使用者不會看到錯誤訊息
+    if _is_failure(reply) and source != "groq" and GROQ_API_KEY:
+        logging.warning(f"⚠️ 來源 {source} 失敗，自動 fallback 到 Groq：{str(reply)[:60]}")
+        fallback = get_groq_response(user_id, user_prompt)
+        if not _is_failure(fallback):
+            return fallback
+        logging.error("❌ Groq fallback 也失敗，回傳原始錯誤")
+
+    return reply
 
 
 # === 重新載入所有排程 ===
